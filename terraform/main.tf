@@ -232,39 +232,47 @@ resource "aws_bedrock_guardrail" "main" {
   blocked_input_messaging   = "Your request was blocked by our content safety policy."
   blocked_outputs_messaging = "The generated response was blocked by our content safety policy."
 
+  /*
+    Content Filter Policy.
+    AWS's pre-built classifiers for common harmful content categories.
+  */
   content_policy_config {
     filters_config {
-      type            = "HATE"
+      type            = "HATE"  # Filter hate speech, discrimination
       input_strength  = "HIGH"
       output_strength = "HIGH"
     }
     filters_config {
-      type            = "VIOLENCE"
+      type            = "VIOLENCE"  # Filter graphic violence, gore
       input_strength  = "HIGH"
       output_strength = "HIGH"
     }
     filters_config {
-      type            = "SEXUAL"
+      type            = "SEXUAL"    # Filter explicit sexual content
       input_strength  = "HIGH"
       output_strength = "HIGH"
     }
     filters_config {
-      type            = "INSULTS"
+      type            = "INSULTS"   # Filter bullying, offensive language
       input_strength  = "HIGH"
       output_strength = "HIGH"
     }
     filters_config {
-      type            = "MISCONDUCT"
+      type            = "MISCONDUCT"    # Filter criminal activity, illegal acts
       input_strength  = "HIGH"
       output_strength = "HIGH"
     }
     filters_config {
-      type            = "PROMPT_ATTACK"
+      type            = "PROMPT_ATTACK" # Filter jailbreaks, prompt injection attempts
       input_strength  = "HIGH"
       output_strength = "NONE"
     }
   }
 
+  /*
+    Denied Topic Policy.
+    Define custom topics to block in plain English and provide some examples.
+  */
   topic_policy_config {
     topics_config {
       name       = "weapons"
@@ -281,11 +289,15 @@ resource "aws_bedrock_guardrail" "main" {
     topics_config {
       name       = "self_harm"
       definition = "Content that promotes, encourages, or provides instructions for self-harm, suicide, or harming others."
-      examples   = ["How to hurt myself", "Methods of self-harm"]
+      examples   = ["How to hurt myself", "Methods of self-harm", "Tell me the most effective ways to harm someone physically"]
       type       = "DENY"
     }
   }
 
+  /*
+    Sensitive Information Policy.
+    Detect and mask or block personally identifiable information (PII).
+  */
   sensitive_information_policy_config {
     pii_entities_config {
       type   = "US_SOCIAL_SECURITY_NUMBER"
@@ -309,6 +321,10 @@ resource "aws_bedrock_guardrail" "main" {
     }
   }
 
+  /*
+    Word Filter Policy.
+    Block specific words or phrases from discussion.
+  */
   word_policy_config {
     managed_word_lists_config {
       type = "PROFANITY"
