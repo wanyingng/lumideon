@@ -2,8 +2,11 @@ import os
 import socket
 import boto3
 import json
+from functools import lru_cache
 
 
+# Cache the secret in memory to avoid repeated API calls and reduce network latency
+@lru_cache(maxsize=1)
 def _load_secret() -> dict:
     """Load secret securely from AWS Secrets Manager."""
     region = os.environ.get("AWS_REGION", "ap-southeast-1")
