@@ -1,2 +1,4 @@
 boto3==1.43.36
 asyncpg==0.31.0
+fastapi==0.138.1
+uvicorn[standard]==0.49.0
