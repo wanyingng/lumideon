@@ -11,8 +11,18 @@ _EMB_PREFIX = "emb:"
 
 def _cosine_similarity(a: list[float], b: list[float]) -> float:
     """Calculate and return the cosine similarity between two embedding vectors."""
-    va, vb = np.array(a), np.array(b)
-    return float(np.dot(va, vb) / (np.linalg.norm(va) * np.linalg.norm(vb)))
+    # Convert the input lists to float32 NumPy arrays for efficient numerical computation
+    va = np.asarray(a, dtype=np.float32)
+    vb = np.asarray(b, dtype=np.float32)
+
+    denominator = np.linalg.norm(va) * np.linalg.norm(vb)
+    # Avoid division by zero when either vector has zero magnitude
+    if denominator == 0:
+        return 0.0
+
+    similarity = np.dot(va, vb) / denominator
+    # Clamp floating-point rounding errors to the valid cosine similarity range [-1.0, 1.0]
+    return float(np.clip(similarity, -1.0, 1.0))
 
 
 def _embed(text: str) -> list[float]:
