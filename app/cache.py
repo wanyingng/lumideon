@@ -1,3 +1,4 @@
+import hashlib
 import json
 import numpy as np
 import redis.asyncio as aioredis
@@ -30,6 +31,11 @@ def _embed(text: str) -> list[float]:
     return _model.encode(text).tolist()
 
 
+def _get_key_suffix(text: str) -> str:
+    """Generate a deterministic key suffix for the given text."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+
 async def cache_get(redis: aioredis.Redis, config: Config, query: str) -> str | None:
     """Retrieve the first cached result whose similarity exceeds the configured threshold for the given query."""
     # Convert the user query into a vector embedding
@@ -53,8 +59,8 @@ async def cache_get(redis: aioredis.Redis, config: Config, query: str) -> str | 
 
 async def cache_set(redis: aioredis.Redis, config: Config, query: str, result: str) -> None:
     """Cache a query result and its embedding using the configured TTL."""
-    # Generate a key suffix that links the cached result and its vector embedding together
-    key_suffix = abs(hash(query))
+    # Generate a deterministic key suffix that links the cached result and its vector embedding together
+    key_suffix = _get_key_suffix(query)
 
     # Asynchronously store the cached query result text in Redis
     await redis.setex(f"{_CACHE_PREFIX}{key_suffix}", config.cache_ttl, result)
