@@ -37,24 +37,38 @@ def _get_key_suffix(text: str) -> str:
 
 
 async def cache_get(redis: aioredis.Redis, config: Config, query: str) -> str | None:
-    """Retrieve the first cached result whose similarity exceeds the configured threshold for the given query."""
+    """Retrieve the most similar cached result at or above the configured threshold."""
     # Convert the user query into a vector embedding
     query_emb = _embed(query)
 
-    # Iterate over embedding keys without blocking Redis
+    threshold = config.cache_similarity_threshold
+    best_similarity = float("-inf")
+    best_cache_key: str | None = None
+
+    # Iterate over embedding keys without using the blocking KEYS command
     async for key in redis.scan_iter(match=f"{_EMB_PREFIX}*"):
-        # Convert the stored embedding in JSON string back to a list
-        stored_emb = json.loads(await redis.get(key))
+        stored_value = await redis.get(key)
 
-        # Check if the stored embedding is similar enough to the embedding of the user query
-        if _cosine_similarity(query_emb, stored_emb) >= config.cache_similarity_threshold:
+        # Skip if the embedding is not found (e.g., expired or deleted)
+        if stored_value is None:
+            continue
+
+        # Deserialize the stored embedding from JSON into a list
+        stored_emb = json.loads(stored_value)
+        similarity = _cosine_similarity(query_emb, stored_emb)
+
+        # Accept candidates at or above the threshold and keep the best match
+        if similarity >= threshold and similarity > best_similarity:
+            best_similarity = similarity
             # Transform the embedding key to the corresponding cache key
-            cache_key = key.replace(_EMB_PREFIX, _CACHE_PREFIX)
-            # Asynchronously retrieve the cached query result in Redis
-            return await redis.get(cache_key)
+            best_cache_key = key.replace(_EMB_PREFIX, _CACHE_PREFIX)
 
-    # No embedding is found to meet the similarity threshold
-    return None
+    # Return a cache miss if no embedding meets the similarity threshold
+    if best_cache_key is None:
+        return None
+
+    # Retrieve the cached result only after identifying the best match
+    return await redis.get(best_cache_key)
 
 
 async def cache_set(redis: aioredis.Redis, config: Config, query: str, result: str) -> None:
