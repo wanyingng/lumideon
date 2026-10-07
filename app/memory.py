@@ -148,3 +148,34 @@ async def ltm_search_related(config: Config, topic: str) -> str | None:
             str(embedding), config.ltm_threshold - 0.01,
         )
         return row["report"] if row else None
+
+
+async def ltm_diff(config: Config, topic: str) -> str | None:
+    """Generates a unified diff between the two most recent reports for a topic.
+
+    Retrieves the two latest records whose topic exactly matches the supplied topic and produces a unified text diff comparing the older report with the newer report. The generated diff is truncated according to ``config.ltm_diff_limit * 10``.
+
+    Args:
+        config: Application configuration containing the diff limit setting.
+        topic: Exact topic string used to select the reports to compare.
+
+    Returns:
+        Unified diff string comparing the two most recent matching reports, ``"No significant changes detected."`` if the reports produce no diff, or None if fewer than two matching reports exist.
+    """
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT report, created_at FROM reports WHERE topic = $1 ORDER BY created_at DESC LIMIT 2",
+            topic,
+        )
+        if len(rows) < 2:
+            return None
+        old_lines = rows[1]["report"].splitlines(keepends=True)
+        new_lines = rows[0]["report"].splitlines(keepends=True)
+        diff_lines = list(difflib.unified_diff(
+            old_lines, new_lines,
+            fromfile=f"previous ({rows[1]['created_at'].date()})",
+            tofile=f"latest ({rows[0]['created_at'].date()})",
+            lineterm="",
+        ))
+        return "\n".join(diff_lines[:config.ltm_diff_limit * 10]) or "No significant changes detected."
