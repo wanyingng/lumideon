@@ -1,0 +1,73 @@
+[gateway]
+bind_address = "0.0.0.0:3000"
+
+# --------------------------------------------------------------------------------
+# Models and provider routing details
+# --------------------------------------------------------------------------------
+
+[models.lumideon_model]
+routing = ["openai_gpt4o", "groq_fallback"] # ordered list
+
+[models.lumideon_model.providers.openai_gpt4o]
+type = "openai"
+model_name = "gpt-4o"
+
+[models.lumideon_model.providers.groq_fallback]
+type = "groq"
+model_name = "openai/gpt-oss-20b"
+
+# --------------------------------------------------------------------------------
+# Research function
+# --------------------------------------------------------------------------------
+
+[functions.research_topic]
+type = "chat"
+
+[functions.research_topic.variants.primary]
+type = "chat_completion"
+model = "lumideon_model"
+system_template = "templates/research_topic_system.minijinja"
+temperature = 0.3
+max_tokens = 3000
+
+# --------------------------------------------------------------------------------
+# Summarization function
+# --------------------------------------------------------------------------------
+
+[functions.summarize_results]
+type = "chat"
+
+[functions.summarize_results.variants.primary]
+type = "chat_completion"
+model = "lumideon_model"
+system_template = "templates/summarize_results_system.minijinja"
+temperature = 0.2
+max_tokens = 2500
+
+# --------------------------------------------------------------------------------
+# Report writing function
+# --------------------------------------------------------------------------------
+
+[functions.write_report]
+type = "chat"
+
+[functions.write_report.variants.primary]
+type = "chat_completion"
+model = "lumideon_model"
+system_template = "templates/write_report_system.minijinja"
+temperature = 0.4
+max_tokens = 5000
+
+# --------------------------------------------------------------------------------
+# Report verification function
+# --------------------------------------------------------------------------------
+
+[functions.verify_report]
+type = "chat"
+
+[functions.verify_report.variants.primary]
+type = "chat_completion"
+model = "lumideon_model"
+system_template = "templates/verify_report_system.minijinja"
+temperature = 0.0
+max_tokens = 1000
