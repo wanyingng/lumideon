@@ -612,7 +612,7 @@ resource "aws_secretsmanager_secret_version" "config" {
     AGENT_MAX_ITERATIONS      = "2"
     EVAL_REPORT_TRUNCATE      = "1500"
     EVAL_COMMENT_TRUNCATE     = "300"
-    LLM_MAX_RETRIES           = "3"
+    LLM_MAX_RETRIES           = "2"
     LLM_RETRY_DELAY           = "1.0"
     RATE_LIMIT_REQUESTS       = "10"
     RATE_LIMIT_WINDOW         = "60"

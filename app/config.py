@@ -71,7 +71,7 @@ class Config:
         self.eval_comment_truncate: int = int(data.get("EVAL_COMMENT_TRUNCATE", 300))
 
         # LLM retry
-        self.llm_max_retries: int = int(data.get("LLM_MAX_RETRIES", 3))
+        self.llm_max_retries: int = int(data.get("LLM_MAX_RETRIES", 2))
         self.llm_retry_delay: float = float(data.get("LLM_RETRY_DELAY", 1.0))
 
         # Rate limiting (per IP, per window)
